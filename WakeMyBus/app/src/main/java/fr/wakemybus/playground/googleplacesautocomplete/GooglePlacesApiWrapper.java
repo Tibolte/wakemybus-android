@@ -26,8 +26,9 @@ public class GooglePlacesApiWrapper {
 
     private static final String LOG_TAG = "GooglePlacesAutocomplete";
 
-    private static final String googlePlacesAutoCompleteUrlFormat = "https://maps.googleapis.com/maps/api/place/autocomplete/json?sensor=true&language=en&key=%1$s&input=%2$s";
-    private static final String googlePlacesDetailsUrlFormat = "https://maps.googleapis.com/maps/api/place/details/json?sensor=true&key=%1$s&reference=%2$s";
+    //TODO: inject current language
+    private static final String googlePlacesAutoCompleteUrlFormat = "https://maps.googleapis.com/maps/api/place/autocomplete/json?sensor=true&types=geocode&language=en&key=%1$s&input=%2$s";
+    private static final String googlePlacesDetailsUrlFormat = "https://maps.googleapis.com/maps/api/place/details/json?key=%1$s&reference=%2$s";
     private static final String googlePlacesBiasFormat = "&location=%1$f,%2$f&radius=%3$d";
 
     private static final String API_KEY = "AIzaSyBVcp0jnYx_t7FdZouEhnw7DV80C8UjiMQ";
