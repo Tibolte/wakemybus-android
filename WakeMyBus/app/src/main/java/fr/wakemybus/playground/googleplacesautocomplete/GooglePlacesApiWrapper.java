@@ -30,7 +30,7 @@ public class GooglePlacesApiWrapper {
     private static final String googlePlacesDetailsUrlFormat = "https://maps.googleapis.com/maps/api/place/details/json?sensor=true&key=%1$s&reference=%2$s";
     private static final String googlePlacesBiasFormat = "&location=%1$f,%2$f&radius=%3$d";
 
-    private static final String API_KEY = "your api key here";
+    private static final String API_KEY = "AIzaSyBVcp0jnYx_t7FdZouEhnw7DV80C8UjiMQ";
 
     public static ArrayList<PlacesAutoCompletePredictions.PlacesAutoCompletePrediction> autocomplete(
             String input, Location locationBias, Long radiusBias) {

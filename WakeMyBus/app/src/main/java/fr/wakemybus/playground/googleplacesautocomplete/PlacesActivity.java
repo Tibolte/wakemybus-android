@@ -27,6 +27,8 @@ public class PlacesActivity extends ActionBarActivity implements AdapterView.OnI
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_places);
+
+        initAutoComplete();
     }
 
     private void initAutoComplete() {
