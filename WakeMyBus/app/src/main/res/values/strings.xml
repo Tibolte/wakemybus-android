@@ -5,4 +5,8 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
 
+    <!-- playground strings -->
+    <string name="google_places">Google places</string>
+    <string name="enter_address">Enter Address</string>
+
 </resources>
