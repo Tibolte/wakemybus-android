@@ -8,5 +8,7 @@
     <!-- playground strings -->
     <string name="google_places">Google places</string>
     <string name="enter_address">Enter Address</string>
+    <string name="title_activity_playground">PlaygroundActivity</string>
+    <string name="title_activity_geofencing">GeofencingActivity</string>
 
 </resources>
