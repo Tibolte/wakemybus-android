@@ -41,12 +41,31 @@
         </activity>
         <activity
             android:name="fr.wakemybus.playground.geofencing.GeofencingActivity"
-            android:label="@string/title_activity_geofencing" >
+            android:label="@string/title_activity_geofencing"
+            android:launchMode="singleTop">
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+            </intent-filter>
+
+            <!-- Points to searchable activity -->
+            <meta-data android:name="android.app.default_searchable"
+                android:value=".GeofencingActivity" />
+
+            <!-- Points to searchable meta data -->
+            <meta-data android:name="android.app.searchable"
+                android:resource="@xml/searchable"/>
+
         </activity>
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyDH-R2tFGSZxvDYTYGxFd-zkBDqtRCKWfI"/>
+
+        <provider
+            android:name="fr.wakemybus.playground.geofencing.PlaceProvider"
+            android:authorities="fr.wakemybus.wakemybus.PlaceProvider"
+            android:exported="false" />
 
     </application>
 

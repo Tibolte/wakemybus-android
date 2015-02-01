@@ -10,5 +10,8 @@
     <string name="enter_address">Enter Address</string>
     <string name="title_activity_playground">PlaygroundActivity</string>
     <string name="title_activity_geofencing">GeofencingActivity</string>
+    <string name="action_search">Search</string>
+    <string name="search_hint">Search Places</string>
+    <string name="search_settings">Search Places</string>
 
 </resources>
