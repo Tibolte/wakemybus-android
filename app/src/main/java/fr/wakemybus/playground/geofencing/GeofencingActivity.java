@@ -4,12 +4,11 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.location.Location;
+import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBarActivity;
-import android.os.Bundle;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.Menu;
@@ -24,9 +23,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import fr.wakemybus.playground.util.GPSTracker;
 import fr.wakemybus.wakemybus.R;
-import pl.charmas.android.reactivelocation.ReactiveLocationProvider;
-import rx.functions.Action1;
 
 public class GeofencingActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -40,49 +38,43 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
         map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map))
                 .getMap();
 
-        ReactiveLocationProvider locationProvider = new ReactiveLocationProvider(getApplicationContext());
-        locationProvider.getLastKnownLocation()
-                .subscribe(new Action1<Location>() {
+        GPSTracker gps = new GPSTracker(this);
+        if(gps.canGetLocation()){
+            if (map!=null){
+                double curLat = gps.getLatitude();
+                double curLon = gps.getLongitude();
+                LatLng currentPos = new LatLng(curLat, curLon);
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(curLat, curLon), 12));
+
+                final Marker marker= map.addMarker(new MarkerOptions().position(currentPos)
+                        .title("Draggable Marker")
+                        .snippet("Long press and move the marker if needed.")
+                        .draggable(true));
+                map.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+
                     @Override
-                    public void call(Location location) {
-                        if (map!=null){
-                            if(location != null) {
-                                double curLat = location.getLatitude();
-                                double curLon = location.getLongitude();
-                                LatLng currentPos = new LatLng(curLat, curLon);
-                                map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(curLat, curLon), 12));
+                    public void onMarkerDrag(Marker arg0) {
+                        // TODO Auto-generated method stub
+                        Log.d("Marker", "Dragging");
+                    }
 
-                                final Marker marker= map.addMarker(new MarkerOptions().position(currentPos)
-                                        .title("Draggable Marker")
-                                        .snippet("Long press and move the marker if needed.")
-                                        .draggable(true));
-                                map.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+                    @Override
+                    public void onMarkerDragEnd(Marker arg0) {
+                        // TODO Auto-generated method stub
+                        LatLng markerLocation = marker.getPosition();
+                        Toast.makeText(GeofencingActivity.this, markerLocation.toString(), Toast.LENGTH_LONG).show();
+                        Log.d("Marker", "finished");
+                    }
 
-                                    @Override
-                                    public void onMarkerDrag(Marker arg0) {
-                                        // TODO Auto-generated method stub
-                                        Log.d("Marker", "Dragging");
-                                    }
+                    @Override
+                    public void onMarkerDragStart(Marker arg0) {
+                        // TODO Auto-generated method stub
+                        Log.d("Marker", "Started");
 
-                                    @Override
-                                    public void onMarkerDragEnd(Marker arg0) {
-                                        // TODO Auto-generated method stub
-                                        LatLng markerLocation = marker.getPosition();
-                                        Toast.makeText(GeofencingActivity.this, markerLocation.toString(), Toast.LENGTH_LONG).show();
-                                        Log.d("Marker", "finished");
-                                    }
-
-                                    @Override
-                                    public void onMarkerDragStart(Marker arg0) {
-                                        // TODO Auto-generated method stub
-                                        Log.d("Marker", "Started");
-
-                                    }
-                                });
-                            }
-                        }
                     }
                 });
+            }
+        }
 
     }
 

@@ -3,9 +3,12 @@ package fr.wakemybus.playground.geofencing;
 import android.app.SearchManager;
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.MatrixCursor;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.util.Log;
 
@@ -22,6 +25,9 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+
+import fr.wakemybus.playground.util.GPSTracker;
 
 /**
  * Created by thibaultguegan on 01/02/15.
@@ -284,8 +290,22 @@ public class PlaceProvider extends ContentProvider {
 
         // Output format
         String output = "json";
+
         // Building the url to the web service
         String url = "https://maps.googleapis.com/maps/api/place/autocomplete/"+output+"?"+parameters;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(url);
+
+        //TODO: restrict severely but this radius is just a bias
+        LocationManager locationManager = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
+        Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        if(lastKnownLocation != null) {
+            sb.append(getBiasString(lastKnownLocation, new Long(5000)));
+        }
+
+        url = sb.toString();
+
         return url;
     }
 
@@ -313,4 +333,17 @@ public class PlaceProvider extends ContentProvider {
         return data;
     }
 
+    private static String getBiasString(Location locationBias, Long radiusBias) {
+        String val = "";
+        if (locationBias != null && radiusBias != null) {
+            double lat = locationBias.getLatitude();
+            double lon = locationBias.getLongitude();
+            if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180
+                    && radiusBias > 0 && radiusBias < 50000) {
+                val = String.format(Locale.US, PLACES_BIAS_FORMAT, lat, lon,
+                        radiusBias);
+            }
+        }
+        return val;
+    }
 }
