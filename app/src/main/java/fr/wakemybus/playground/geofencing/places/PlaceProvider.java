@@ -1,4 +1,4 @@
-package fr.wakemybus.playground.geofencing;
+package fr.wakemybus.playground.geofencing.places;
 
 import android.app.SearchManager;
 import android.content.ContentProvider;
@@ -27,8 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-import fr.wakemybus.playground.util.GPSTracker;
-
 /**
  * Created by thibaultguegan on 01/02/15.
  */
@@ -45,6 +43,8 @@ public class PlaceProvider extends ContentProvider {
     private static final int SEARCH = 1;
     private static final int SUGGESTIONS = 2;
     private static final int DETAILS = 3;
+
+    private static final int RADIUS = 5000;
 
     // Obtain browser key from https://code.google.com/apis/console
     String mKey = "key=AIzaSyBVcp0jnYx_t7FdZouEhnw7DV80C8UjiMQ";
@@ -301,7 +301,7 @@ public class PlaceProvider extends ContentProvider {
         LocationManager locationManager = (LocationManager) getContext().getSystemService(Context.LOCATION_SERVICE);
         Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         if(lastKnownLocation != null) {
-            sb.append(getBiasString(lastKnownLocation, new Long(5000)));
+            sb.append(getBiasString(lastKnownLocation, new Long(RADIUS)));
         }
 
         url = sb.toString();

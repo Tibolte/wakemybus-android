@@ -63,9 +63,14 @@
             android:value="AIzaSyDH-R2tFGSZxvDYTYGxFd-zkBDqtRCKWfI"/>
 
         <provider
-            android:name="fr.wakemybus.playground.geofencing.PlaceProvider"
+            android:name="fr.wakemybus.playground.geofencing.places.PlaceProvider"
             android:authorities="fr.wakemybus.wakemybus.PlaceProvider"
             android:exported="false" />
+
+        <service
+            android:name="fr.wakemybus.playground.geofencing.GeofenceTransitionsIntentService"
+            android:exported="false">
+        </service>
 
     </application>
 

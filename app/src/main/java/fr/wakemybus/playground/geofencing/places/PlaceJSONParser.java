@@ -1,4 +1,4 @@
-package fr.wakemybus.playground.geofencing;
+package fr.wakemybus.playground.geofencing.places;
 
 import org.json.JSONArray;
 import org.json.JSONException;
