@@ -68,7 +68,7 @@
             android:exported="false" />
 
         <service
-            android:name="fr.wakemybus.playground.geofencing.GeofenceTransitionsIntentService"
+            android:name="fr.wakemybus.playground.geofencing.services.GeofenceTransitionsIntentService"
             android:exported="false">
         </service>
 

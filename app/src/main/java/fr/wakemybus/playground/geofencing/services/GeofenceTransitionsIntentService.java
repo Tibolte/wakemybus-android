@@ -1,4 +1,4 @@
-package fr.wakemybus.playground.geofencing;
+package fr.wakemybus.playground.geofencing.services;
 
 import android.app.IntentService;
 import android.app.NotificationManager;
@@ -19,6 +19,7 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 
 import java.util.concurrent.TimeUnit;
 
+import fr.wakemybus.playground.geofencing.GeofencingActivity;
 import fr.wakemybus.wakemybus.R;
 
 import static fr.wakemybus.playground.geofencing.Constants.CONNECTION_TIME_OUT_MS;
