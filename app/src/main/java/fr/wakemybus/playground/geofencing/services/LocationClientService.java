@@ -1,10 +1,9 @@
 package fr.wakemybus.playground.geofencing.services;
 
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.IBinder;
+import android.os.Message;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -13,7 +12,6 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +22,17 @@ import fr.wakemybus.playground.geofencing.SimpleGeofenceStore;
 /**
  * Created by thibaultguegan on 08/02/15.
  */
-public class LocationClientService extends Service implements
+public class LocationClientService extends AbstractService implements
         GooglePlayServicesClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, GoogleApiClient.ConnectionCallbacks{
 
     private static final String TAG = LocationClientService.class.getSimpleName();
+
+    private static final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+
+    public static final int ADD_GEOFENCE = 11;
+    public static final int KILL = 21;
+    public static final String BUNDLE_GEOFENCE = "fr.wakemybus.geofence";
 
     // Internal List of Geofence objects. In a real app, these might be provided by an API based on
     // locations within the user's proximity.
@@ -43,9 +47,7 @@ public class LocationClientService extends Service implements
     private GoogleApiClient mApiClient;
 
     @Override
-    public void onCreate() {
-        super.onCreate();
-
+    public void onStartService() {
         if (!isGooglePlayServicesAvailable()) {
             Log.e(TAG, "Google Play services unavailable.");
             //TODO: prevent the service from running geofences then
@@ -55,6 +57,43 @@ public class LocationClientService extends Service implements
         mGeofenceStorage = new SimpleGeofenceStore(this);
         // Instantiate the current List of geofences.
         mGeofenceList = new ArrayList<Geofence>();
+    }
+
+    @Override
+    public void onStopService() {
+        mClients.clear();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
+
+    @Override
+    public void onReceiveMessage(Message msg) {
+        switch (msg.what) {
+            case MSG_REGISTER_CLIENT: {
+                replyToClientMessage(msg, MSG_REGISTER_CLIENT_CONFIRMATION, null);
+                break;
+            }
+            case MSG_UNREGISTER_CLIENT: {
+                if(mClients.size()==0) {
+                    stopSelf();
+                }
+                break;
+            }
+            case ADD_GEOFENCE: {
+                Bundle b = msg.getData();
+                b.setClassLoader(SimpleGeofence.class.getClassLoader());
+                SimpleGeofence simpleGeofence = (SimpleGeofence)b.getParcelable(BUNDLE_GEOFENCE);
+                createGeoFence(simpleGeofence);
+                break;
+            }
+            case KILL: {
+                stopSelf();
+                break;
+            }
+        }
     }
 
     @Override
@@ -96,21 +135,7 @@ public class LocationClientService extends Service implements
         }*/
     }
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    private void createGeoFence(LatLng position) {
-
-        SimpleGeofence geofence = new SimpleGeofence(
-                "1",
-                position.latitude,
-                position.longitude,
-                100.0f,
-                -1,
-                Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT
-        );
+    private void createGeoFence(SimpleGeofence geofence) {
 
         mGeofenceStorage.setGeofence("1", geofence);
         mGeofenceList.add(geofence.toGeofence());

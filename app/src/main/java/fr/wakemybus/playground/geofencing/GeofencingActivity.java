@@ -1,12 +1,13 @@
 package fr.wakemybus.playground.geofencing;
 
-import android.app.PendingIntent;
+import android.annotation.SuppressLint;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -17,12 +18,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.github.mrengineer13.snackbar.SnackBar;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesClient;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -31,42 +27,41 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import fr.wakemybus.playground.geofencing.places.PlaceProvider;
+import fr.wakemybus.playground.geofencing.services.LocationClientService;
+import fr.wakemybus.playground.geofencing.services.ServiceManager;
 import fr.wakemybus.playground.util.GPSTracker;
 import fr.wakemybus.wakemybus.R;
-
-import static fr.wakemybus.playground.geofencing.Constants.CONNECTION_FAILURE_RESOLUTION_REQUEST;
 
 public class GeofencingActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String TAG = GeofencingActivity.class.getSimpleName();
 
-    private GoogleMap map;
+    public static final int START_SERVICE = 201;
+
+    private GoogleMap mMap;
+    private ServiceManager mServiceManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_geofencing);
 
-        map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map))
-                .getMap();
+        mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
 
         GPSTracker gps = new GPSTracker(this);
         if(gps.canGetLocation()){
-            if (map!=null){
+            if (mMap!=null){
                 double curLat = gps.getLatitude();
                 double curLon = gps.getLongitude();
                 LatLng currentPos = new LatLng(curLat, curLon);
-                map.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(curLat, curLon), 12));
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(curLat, curLon), 12));
 
-                final Marker marker= map.addMarker(new MarkerOptions().position(currentPos)
+                final Marker marker= mMap.addMarker(new MarkerOptions().position(currentPos)
                         .title("Draggable Marker")
                         .snippet("Long press and move the marker if needed.")
                         .draggable(true));
-                map.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+                mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
 
                     @Override
                     public void onMarkerDrag(Marker arg0) {
@@ -79,7 +74,20 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
                         // TODO Auto-generated method stub
                         LatLng markerLocation = marker.getPosition();
 
-                        //createGeoFence(markerLocation);
+                        SimpleGeofence geofence = new SimpleGeofence(
+                                "1",
+                                markerLocation.latitude,
+                                markerLocation.longitude,
+                                100.0f,
+                                -1,
+                                Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT
+                        );
+
+                        Bundle b = new Bundle();
+                        b.putParcelable(LocationClientService.BUNDLE_GEOFENCE, geofence);
+                        if (mServiceManager != null) {
+                            mServiceManager.sendServiceMessage(LocationClientService.ADD_GEOFENCE, b);
+                        }
 
                         Log.d("Marker", "finished");
                     }
@@ -101,7 +109,32 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
             }
         }
 
+        mServiceHandler.sendEmptyMessage(START_SERVICE);
     }
+
+    @Override
+    protected void onDestroy() {
+        try {
+            mServiceManager.unbind();
+        } catch (Throwable t) {
+
+        }
+        super.onDestroy();
+    }
+
+    @SuppressLint("HandlerLeak")
+    private Handler mServiceHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            Bundle b = msg.getData();
+            switch (msg.what) {
+                case START_SERVICE: {
+                    mServiceManager = new ServiceManager(GeofencingActivity.this, LocationClientService.class, this);
+                    mServiceManager.start();
+                }
+            }
+        }
+    };
 
     private void handleIntent(Intent intent){
         if(intent.getAction() != null) {
@@ -184,17 +217,17 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
     private void showLocations(Cursor c){
         MarkerOptions markerOptions = null;
         LatLng position = null;
-        map.clear();
+        mMap.clear();
         while(c.moveToNext()){
             markerOptions = new MarkerOptions();
             position = new LatLng(Double.parseDouble(c.getString(1)),Double.parseDouble(c.getString(2)));
             markerOptions.position(position);
             markerOptions.title(c.getString(0));
-            map.addMarker(markerOptions);
+            mMap.addMarker(markerOptions);
         }
         if(position!=null){
             CameraUpdate cameraPosition = CameraUpdateFactory.newLatLng(position);
-            map.animateCamera(cameraPosition);
+            mMap.animateCamera(cameraPosition);
             //createGeoFence(position);
         }
     }

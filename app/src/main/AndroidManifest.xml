@@ -68,6 +68,12 @@
             android:exported="false" />
 
         <service
+            android:name="fr.wakemybus.playground.geofencing.services.LocationClientService"
+            android:enabled="true"
+            android:process=":geofenceservice">
+        </service>
+
+        <service
             android:name="fr.wakemybus.playground.geofencing.services.GeofenceTransitionsIntentService"
             android:exported="false">
         </service>

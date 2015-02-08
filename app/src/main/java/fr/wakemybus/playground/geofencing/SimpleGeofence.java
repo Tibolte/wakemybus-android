@@ -1,11 +1,14 @@
 package fr.wakemybus.playground.geofencing;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.android.gms.location.Geofence;
 
 /**
  * A single Geofence object, defined by its center and radius.
  */
-public class SimpleGeofence {
+public class SimpleGeofence implements Parcelable{
 
     // Instance variables
     private final String mId;
@@ -68,4 +71,37 @@ public class SimpleGeofence {
                 .build();
     }
 
+    public static final Creator<SimpleGeofence> CREATOR = new Creator<SimpleGeofence>() {
+        public SimpleGeofence createFromParcel(Parcel in) {
+            return new SimpleGeofence(in);
+        }
+
+        public SimpleGeofence[] newArray(int size) {
+            return new SimpleGeofence[size];
+        }
+    };
+
+    public SimpleGeofence(Parcel in) {
+        mId = in.readString();
+        mLatitude = in.readDouble();
+        mLongitude = in.readDouble();
+        mRadius = in.readFloat();
+        mExpirationDuration = in.readLong();
+        mTransitionType = in.readInt();
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(mId);
+        dest.writeDouble(mLatitude);
+        dest.writeDouble(mLongitude);
+        dest.writeFloat(mRadius);
+        dest.writeLong(mExpirationDuration);
+        dest.writeInt(mTransitionType);
+    }
 }
