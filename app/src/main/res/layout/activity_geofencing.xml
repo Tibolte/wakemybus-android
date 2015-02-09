@@ -3,10 +3,9 @@
     android:layout_height="match_parent"
     tools:context="fr.wakemybus.playground.geofencing.GeofencingActivity">
 
-    <fragment
-        android:id="@+id/map"
+    <android.support.v4.view.ViewPager
+        android:id="@+id/pager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        class="com.google.android.gms.maps.MapFragment" />
+        android:layout_height="match_parent"/>
 
 </RelativeLayout>

@@ -8,14 +8,22 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 
 import com.github.mrengineer13.snackbar.SnackBar;
 import com.google.android.gms.location.Geofence;
@@ -27,13 +35,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.Locale;
+
 import fr.wakemybus.playground.geofencing.places.PlaceProvider;
 import fr.wakemybus.playground.geofencing.services.LocationClientService;
 import fr.wakemybus.playground.geofencing.services.ServiceManager;
 import fr.wakemybus.playground.util.GPSTracker;
 import fr.wakemybus.wakemybus.R;
 
-public class GeofencingActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Cursor> {
+public class GeofencingActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Cursor>, ActionBar.TabListener {
 
     private static final String TAG = GeofencingActivity.class.getSimpleName();
 
@@ -42,6 +52,8 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
     private GoogleMap mMap;
     private ServiceManager mServiceManager;
     private static GeofencingActivity mInstance;
+    private ViewPager mViewPager;
+    private SectionsPagerAdapter mSectionsPagerAdapter;
 
     /**
      * MARK: Activity overrides
@@ -55,64 +67,30 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
 
         setContentView(R.layout.activity_geofencing);
 
-        mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+        // Set up the action bar.
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 
-        GPSTracker gps = new GPSTracker(this);
-        if(gps.canGetLocation()){
-            if (mMap!=null){
-                double curLat = gps.getLatitude();
-                double curLon = gps.getLongitude();
-                LatLng currentPos = new LatLng(curLat, curLon);
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(curLat, curLon), 12));
+        mViewPager = (ViewPager) findViewById(R.id.pager);
 
-                final Marker marker= mMap.addMarker(new MarkerOptions().position(currentPos)
-                        .title("Draggable Marker")
-                        .snippet("Long press and move the marker if needed.")
-                        .draggable(true));
-                mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
-                    @Override
-                    public void onMarkerDrag(Marker arg0) {
-                        Log.d(TAG, "Marker Dragging");
-                    }
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mSectionsPagerAdapter);
 
-                    @Override
-                    public void onMarkerDragEnd(Marker arg0) {
-                        LatLng markerLocation = marker.getPosition();
-
-                        SimpleGeofence geofence = new SimpleGeofence(
-                                "1",
-                                markerLocation.latitude,
-                                markerLocation.longitude,
-                                100.0f,
-                                -1,
-                                Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT
-                        );
-
-                        //TODO: ask/confirm create a geofence
-                        Bundle b = new Bundle();
-                        b.putParcelable(LocationClientService.BUNDLE_GEOFENCE, geofence);
-                        if (mServiceManager != null) {
-                            mServiceManager.sendServiceMessage(LocationClientService.ADD_GEOFENCE, b);
-                        }
-
-                        Log.d(TAG, "Marker finished");
-                    }
-
-                    @Override
-                    public void onMarkerDragStart(Marker arg0) {
-                        Log.d(TAG, "Marker Started");
-
-                    }
-                });
-
-                new SnackBar.Builder(this)
-                        .withMessage(getString(R.string.map_instructions))
-                        .withActionMessage(getString(R.string.map_instructions_ok))
-                        .withStyle(SnackBar.Style.CONFIRM)
-                        .withDuration(SnackBar.LONG_SNACK)
-                        .show();
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
             }
+        });
+
+        // For each of the sections in the app, add a tab to the action bar.
+        for (int i = 0; i < mSectionsPagerAdapter.getCount(); i++) {
+            actionBar.addTab(
+                    actionBar.newTab()
+                            .setText(mSectionsPagerAdapter.getPageTitle(i))
+                            .setTabListener(this));
         }
 
         mServiceHandler.sendEmptyMessage(START_SERVICE);
@@ -161,6 +139,83 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
 
         }
         super.onDestroy();
+    }
+
+    /**
+     * MARK: Tabbar Overrides
+     */
+
+    @Override
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        mViewPager.setCurrentItem(tab.getPosition());
+    }
+
+    @Override
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+
+    }
+
+    @Override
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+
+    }
+
+    /**
+     * MARK: Tabbar adapter
+     */
+    //TODO: find the best practice to enable the activity to communicate with current fragment
+    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+
+        SparseArray<Fragment> registeredFragments = new SparseArray<Fragment>();
+
+        public SectionsPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public int getCount() {
+            return 2;
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            switch (position) {
+                case 0:
+                    return fr.wakemybus.playground.geofencing.MapFragment.newInstance();
+                case 1:
+                    return GeofencesFragment.newInstance("", "");
+            }
+            return null;
+        }
+
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            Fragment fragment = (Fragment) super.instantiateItem(container, position);
+            registeredFragments.put(position, fragment);
+            return fragment;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+            switch (position) {
+                case 0:
+                    return getString(R.string.map_fragment).toUpperCase(l);
+                case 1:
+                    return getString(R.string.geofences_fragment).toUpperCase(l);
+            }
+            return null;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            registeredFragments.remove(position);
+            super.destroyItem(container, position, object);
+        }
+
+        public Fragment getRegisteredFragment(int position) {
+            return registeredFragments.get(position);
+        }
     }
 
     /**
@@ -253,17 +308,21 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
     private void showLocations(Cursor c){
         MarkerOptions markerOptions = null;
         LatLng position = null;
-        mMap.clear();
+
+        fr.wakemybus.playground.geofencing.MapFragment mapFragment = (fr.wakemybus.playground.geofencing.MapFragment) mSectionsPagerAdapter.getRegisteredFragment(0);
+        GoogleMap map = mapFragment.getMap();
+
+        map.clear();
         while(c.moveToNext()){
             markerOptions = new MarkerOptions();
             position = new LatLng(Double.parseDouble(c.getString(1)),Double.parseDouble(c.getString(2)));
             markerOptions.position(position);
             markerOptions.title(c.getString(0));
-            mMap.addMarker(markerOptions);
+            map.addMarker(markerOptions);
         }
         if(position!=null){
             CameraUpdate cameraPosition = CameraUpdateFactory.newLatLng(position);
-            mMap.animateCamera(cameraPosition);
+            map.animateCamera(cameraPosition);
             //TODO: ask to confirm creating a geofence
         }
     }
