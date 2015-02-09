@@ -2,6 +2,7 @@ package fr.wakemybus.playground.geofencing.services;
 
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
@@ -16,6 +17,7 @@ import com.google.android.gms.location.LocationServices;
 import java.util.ArrayList;
 import java.util.List;
 
+import fr.wakemybus.playground.geofencing.GeofencingActivity;
 import fr.wakemybus.playground.geofencing.SimpleGeofence;
 import fr.wakemybus.playground.geofencing.SimpleGeofenceStore;
 
@@ -30,8 +32,9 @@ public class LocationClientService extends AbstractService implements
 
     private static final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
-    public static final int ADD_GEOFENCE = 11;
+    public static final int ADD_GEOFENCE = 11, GEOFENCE_CREATED = 12;
     public static final int KILL = 21;
+
     public static final String BUNDLE_GEOFENCE = "fr.wakemybus.geofence";
 
     // Internal List of Geofence objects. In a real app, these might be provided by an API based on
@@ -121,18 +124,21 @@ public class LocationClientService extends AbstractService implements
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         // If the error has a resolution, start a Google Play services activity to resolve it.
-        //TODO: reference activity
-        /*if (connectionResult.hasResolution()) {
-            try {
-                connectionResult.startResolutionForResult(this,
-                        CONNECTION_FAILURE_RESOLUTION_REQUEST);
-            } catch (IntentSender.SendIntentException e) {
-                Log.e(TAG, "Exception while resolving connection error.", e);
+        if (connectionResult.hasResolution()) {
+            if(GeofencingActivity.getInstance() != null) {
+                try {
+                    connectionResult.startResolutionForResult(GeofencingActivity.getInstance(),
+                            CONNECTION_FAILURE_RESOLUTION_REQUEST);
+                } catch (IntentSender.SendIntentException e) {
+                    Log.e(TAG, "Exception while resolving connection error.", e);
+                }
+            } else {
+                Log.e(TAG, "Connection to Google Play services failed: No existing activity to reference to");
             }
         } else {
             int errorCode = connectionResult.getErrorCode();
             Log.e(TAG, "Connection to Google Play services failed with error code " + errorCode);
-        }*/
+        }
     }
 
     private void createGeoFence(SimpleGeofence geofence) {
@@ -148,12 +154,9 @@ public class LocationClientService extends AbstractService implements
 
         mApiClient.connect();
 
-        /*new SnackBar.Builder(this)
-                .withMessage(getString(R.string.geofence_started))
-                .withActionMessage(getString(R.string.map_instructions_ok))
-                .withStyle(SnackBar.Style.INFO)
-                .withDuration(SnackBar.LONG_SNACK)
-                .show();*/
+        Bundle b = new Bundle();
+        b.putParcelable(LocationClientService.BUNDLE_GEOFENCE, geofence);
+        sendClientMessage(GEOFENCE_CREATED, b);
     }
 
     /**

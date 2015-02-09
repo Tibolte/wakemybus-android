@@ -41,10 +41,18 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
 
     private GoogleMap mMap;
     private ServiceManager mServiceManager;
+    private static GeofencingActivity mInstance;
+
+    /**
+     * MARK: Activity overrides
+     */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mInstance = this;
+
         setContentView(R.layout.activity_geofencing);
 
         mMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
@@ -65,13 +73,11 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
 
                     @Override
                     public void onMarkerDrag(Marker arg0) {
-                        // TODO Auto-generated method stub
-                        Log.d("Marker", "Dragging");
+                        Log.d(TAG, "Marker Dragging");
                     }
 
                     @Override
                     public void onMarkerDragEnd(Marker arg0) {
-                        // TODO Auto-generated method stub
                         LatLng markerLocation = marker.getPosition();
 
                         SimpleGeofence geofence = new SimpleGeofence(
@@ -83,19 +89,19 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
                                 Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT
                         );
 
+                        //TODO: ask/confirm create a geofence
                         Bundle b = new Bundle();
                         b.putParcelable(LocationClientService.BUNDLE_GEOFENCE, geofence);
                         if (mServiceManager != null) {
                             mServiceManager.sendServiceMessage(LocationClientService.ADD_GEOFENCE, b);
                         }
 
-                        Log.d("Marker", "finished");
+                        Log.d(TAG, "Marker finished");
                     }
 
                     @Override
                     public void onMarkerDragStart(Marker arg0) {
-                        // TODO Auto-generated method stub
-                        Log.d("Marker", "Started");
+                        Log.d(TAG, "Marker Started");
 
                     }
                 });
@@ -111,60 +117,6 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
 
         mServiceHandler.sendEmptyMessage(START_SERVICE);
     }
-
-    @Override
-    protected void onDestroy() {
-        try {
-            mServiceManager.unbind();
-        } catch (Throwable t) {
-
-        }
-        super.onDestroy();
-    }
-
-    @SuppressLint("HandlerLeak")
-    private Handler mServiceHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            Bundle b = msg.getData();
-            switch (msg.what) {
-                case START_SERVICE: {
-                    mServiceManager = new ServiceManager(GeofencingActivity.this, LocationClientService.class, this);
-                    mServiceManager.start();
-                }
-            }
-        }
-    };
-
-    private void handleIntent(Intent intent){
-        if(intent.getAction() != null) {
-            if(intent.getAction().equals(Intent.ACTION_SEARCH)){
-                doSearch(intent.getStringExtra(SearchManager.QUERY));
-            }else if(intent.getAction().equals(Intent.ACTION_VIEW)){
-                getPlace(intent.getStringExtra(SearchManager.EXTRA_DATA_KEY));
-            }
-        }
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        setIntent(intent);
-        handleIntent(intent);
-    }
-
-    private void doSearch(String query){
-        Bundle data = new Bundle();
-        data.putString("query", query);
-        getSupportLoaderManager().restartLoader(0, data, this);
-    }
-
-    private void getPlace(String query){
-        Bundle data = new Bundle();
-        data.putString("query", query);
-        getSupportLoaderManager().restartLoader(1, data, this);
-    }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -195,6 +147,52 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIntent(intent);
+    }
+
+    @Override
+    protected void onDestroy() {
+        try {
+            mServiceManager.unbind();
+        } catch (Throwable t) {
+
+        }
+        super.onDestroy();
+    }
+
+    /**
+     * MARK: Service handler
+     */
+
+    @SuppressLint("HandlerLeak")
+    private Handler mServiceHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            Bundle b = msg.getData();
+            switch (msg.what) {
+                case START_SERVICE: {
+                    mServiceManager = new ServiceManager(GeofencingActivity.this, LocationClientService.class, this);
+                    mServiceManager.start();
+                }
+                case LocationClientService.GEOFENCE_CREATED: {
+                    if (b != null && b.containsKey(LocationClientService.BUNDLE_GEOFENCE)) {
+                        b.setClassLoader(SimpleGeofence.class.getClassLoader());
+                        SimpleGeofence simpleGeofence = (SimpleGeofence)b.getParcelable(LocationClientService.BUNDLE_GEOFENCE);
+                        showSnackBarGeofenceAdded();
+                    }
+                }
+            }
+        }
+    };
+
+    /**
+     * MARK: Loader Overrides
+     */
+
+    @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         CursorLoader cLoader = null;
         if(id==0)
@@ -214,6 +212,44 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
 
     }
 
+    /**
+     * MARK: Search methods
+     */
+
+    private void handleIntent(Intent intent){
+        if(intent.getAction() != null) {
+            if(intent.getAction().equals(Intent.ACTION_SEARCH)){
+                doSearch(intent.getStringExtra(SearchManager.QUERY));
+            }else if(intent.getAction().equals(Intent.ACTION_VIEW)){
+                getPlace(intent.getStringExtra(SearchManager.EXTRA_DATA_KEY));
+            }
+        }
+    }
+
+    private void doSearch(String query){
+        Bundle data = new Bundle();
+        data.putString("query", query);
+        getSupportLoaderManager().restartLoader(0, data, this);
+    }
+
+    private void getPlace(String query){
+        Bundle data = new Bundle();
+        data.putString("query", query);
+        getSupportLoaderManager().restartLoader(1, data, this);
+    }
+
+    /**
+     * MARK: Public Methods
+     */
+
+    public static GeofencingActivity getInstance() {
+        return mInstance;
+    }
+
+    /**
+     * MARK: Private Methods
+     */
+
     private void showLocations(Cursor c){
         MarkerOptions markerOptions = null;
         LatLng position = null;
@@ -228,8 +264,16 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
         if(position!=null){
             CameraUpdate cameraPosition = CameraUpdateFactory.newLatLng(position);
             mMap.animateCamera(cameraPosition);
-            //createGeoFence(position);
+            //TODO: ask to confirm creating a geofence
         }
     }
 
+    private void showSnackBarGeofenceAdded() {
+        new SnackBar.Builder(GeofencingActivity.this)
+                .withMessage(getString(R.string.geofence_started))
+                .withActionMessage(getString(R.string.map_instructions_ok))
+                .withStyle(SnackBar.Style.INFO)
+                .withDuration(SnackBar.LONG_SNACK)
+                .show();
+    }
 }
