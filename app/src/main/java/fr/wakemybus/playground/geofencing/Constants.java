@@ -10,7 +10,7 @@ public final class Constants {
     private Constants() {
     }
 
-    public static final String TAG = "ExampleGeofencing";
+    public static final String TAG = "Geofencing";
 
     // Request code to attempt to resolve Google Play services connection failures.
     public final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
