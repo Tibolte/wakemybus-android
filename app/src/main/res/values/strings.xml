@@ -8,5 +8,14 @@
     <!-- playground strings -->
     <string name="google_places">Google places</string>
     <string name="enter_address">Enter Address</string>
+    <string name="title_activity_playground">PlaygroundActivity</string>
+    <string name="title_activity_geofencing">GeofencingActivity</string>
+    <string name="action_search">Search</string>
+    <string name="search_hint">Search Places</string>
+    <string name="search_settings">Search Places</string>
+    <string name="map_instructions">To select a location/geofence, you can either drag the marker placed on the map or search for a place.</string>
+    <string name="map_instructions_ok">OK</string>
+    <string name="geofence_started">You\'ve just created a new geofence at the specified location. You\'ll be notified when entering it.</string>
+
 
 </resources>
