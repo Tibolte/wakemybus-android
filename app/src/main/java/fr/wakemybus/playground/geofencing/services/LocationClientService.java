@@ -17,6 +17,7 @@ import com.google.android.gms.location.LocationServices;
 import java.util.ArrayList;
 import java.util.List;
 
+import fr.wakemybus.MyApplication;
 import fr.wakemybus.playground.geofencing.GeofencingActivity;
 import fr.wakemybus.playground.geofencing.SimpleGeofence;
 import fr.wakemybus.playground.geofencing.SimpleGeofenceStore;
@@ -35,7 +36,7 @@ public class LocationClientService extends AbstractService implements
     public static final int ADD_GEOFENCE = 11, GEOFENCE_CREATED = 12;
     public static final int KILL = 21;
 
-    public static final String BUNDLE_GEOFENCE = "fr.wakemybus.geofence";
+    public static final String BUNDLE_GEOFENCE = MyApplication.getInstance().getPackageName() + ".bundle_geofence";
 
     // Internal List of Geofence objects. In a real app, these might be provided by an API based on
     // locations within the user's proximity.

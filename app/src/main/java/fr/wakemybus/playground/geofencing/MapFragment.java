@@ -1,5 +1,8 @@
 package fr.wakemybus.playground.geofencing;
 
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -25,6 +28,14 @@ public class MapFragment extends Fragment {
 
     private GoogleMap mMap;
     private SupportMapFragment mMapFragment;
+    private MapCallback mCallback;
+
+    /**
+     * MARK: Interfaces
+     */
+    public interface MapCallback {
+        public void onMapCreateGeoFence(SimpleGeofence geofence);
+    }
 
     /**
      * MARK: Instance
@@ -80,7 +91,7 @@ public class MapFragment extends Fragment {
                                 public void onMarkerDragEnd(Marker arg0) {
                                     LatLng markerLocation = marker.getPosition();
 
-                                    SimpleGeofence geofence = new SimpleGeofence(
+                                    final SimpleGeofence geofence = new SimpleGeofence(
                                             "1",
                                             markerLocation.latitude,
                                             markerLocation.longitude,
@@ -89,12 +100,21 @@ public class MapFragment extends Fragment {
                                             Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT
                                     );
 
-                                    //TODO: ask/confirm create a geofence
-                        /*Bundle b = new Bundle();
-                        b.putParcelable(LocationClientService.BUNDLE_GEOFENCE, geofence);
-                        if (mServiceManager != null) {
-                            mServiceManager.sendServiceMessage(LocationClientService.ADD_GEOFENCE, b);
-                        }*/
+
+                                    new AlertDialog.Builder(getActivity())
+                                            .setTitle(getString(R.string.alert_geofence_title))
+                                            .setMessage(getString(R.string.alert_geofence_description))
+                                            .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    if (mCallback != null) {
+                                                        mCallback.onMapCreateGeoFence(geofence);
+                                                    }
+                                                }
+
+                                            })
+                                            .setNegativeButton(getString(R.string.no), null)
+                                            .show();
 
                                     Log.d(TAG, "Marker finished");
                                 }
@@ -122,6 +142,20 @@ public class MapFragment extends Fragment {
         return mapView;
     }
 
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        // This makes sure that the container activity has implemented
+        // the callback interface. If not, it throws an exception
+        try {
+            mCallback = (MapCallback) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement MapFragment.MapCallback");
+        }
+    }
+
     /**
      * MARK: Getters/setters
      */
@@ -129,4 +163,5 @@ public class MapFragment extends Fragment {
     public GoogleMap getMap() {
         return mMap;
     }
+
 }

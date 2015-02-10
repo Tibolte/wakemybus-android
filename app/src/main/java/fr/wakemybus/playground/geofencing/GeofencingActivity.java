@@ -1,8 +1,10 @@
 package fr.wakemybus.playground.geofencing;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -43,7 +45,8 @@ import fr.wakemybus.playground.geofencing.services.ServiceManager;
 import fr.wakemybus.playground.util.GPSTracker;
 import fr.wakemybus.wakemybus.R;
 
-public class GeofencingActivity extends ActionBarActivity implements LoaderManager.LoaderCallbacks<Cursor>, ActionBar.TabListener {
+public class GeofencingActivity extends ActionBarActivity
+        implements LoaderManager.LoaderCallbacks<Cursor>, ActionBar.TabListener, fr.wakemybus.playground.geofencing.MapFragment.MapCallback {
 
     private static final String TAG = GeofencingActivity.class.getSimpleName();
 
@@ -161,6 +164,19 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
     }
 
     /**
+     * MARK: MapFragment listener
+     */
+
+    @Override
+    public void onMapCreateGeoFence(SimpleGeofence geofence) {
+        Bundle b = new Bundle();
+        b.putParcelable(LocationClientService.BUNDLE_GEOFENCE, geofence);
+        if (mServiceManager != null) {
+            mServiceManager.sendServiceMessage(LocationClientService.ADD_GEOFENCE, b);
+        }
+    }
+
+    /**
      * MARK: Tabbar adapter
      */
     //TODO: find the best practice to enable the activity to communicate with current fragment
@@ -231,13 +247,17 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
                 case START_SERVICE: {
                     mServiceManager = new ServiceManager(GeofencingActivity.this, LocationClientService.class, this);
                     mServiceManager.start();
+                    break;
                 }
                 case LocationClientService.GEOFENCE_CREATED: {
-                    if (b != null && b.containsKey(LocationClientService.BUNDLE_GEOFENCE)) {
+                    if(b != null) {
                         b.setClassLoader(SimpleGeofence.class.getClassLoader());
-                        SimpleGeofence simpleGeofence = (SimpleGeofence)b.getParcelable(LocationClientService.BUNDLE_GEOFENCE);
-                        showSnackBarGeofenceAdded();
+                        if (b.containsKey(LocationClientService.BUNDLE_GEOFENCE)) {
+                            SimpleGeofence simpleGeofence = b.getParcelable(LocationClientService.BUNDLE_GEOFENCE);
+                            showSnackBarGeofenceAdded();
+                        }
                     }
+                    break;
                 }
             }
         }
@@ -322,8 +342,48 @@ public class GeofencingActivity extends ActionBarActivity implements LoaderManag
         }
         if(position!=null){
             CameraUpdate cameraPosition = CameraUpdateFactory.newLatLng(position);
-            map.animateCamera(cameraPosition);
-            //TODO: ask to confirm creating a geofence
+            final LatLng finalPosition = position;
+            map.animateCamera(cameraPosition, new GoogleMap.CancelableCallback()
+            {
+
+                @Override
+                public void onFinish()
+                {
+                    new AlertDialog.Builder(GeofencingActivity.this)
+                            .setTitle(getString(R.string.alert_geofence_title))
+                            .setMessage(getString(R.string.alert_geofence_description))
+                            .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    SimpleGeofence geofence = new SimpleGeofence(
+                                            "1",
+                                            finalPosition.latitude,
+                                            finalPosition.longitude,
+                                            100.0f,
+                                            -1,
+                                            Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT
+                                    );
+                                    Bundle b = new Bundle();
+                                    b.putParcelable(LocationClientService.BUNDLE_GEOFENCE, geofence);
+                                    if (mServiceManager != null) {
+                                        mServiceManager.sendServiceMessage(LocationClientService.ADD_GEOFENCE, b);
+                                    }
+                                }
+
+                            })
+                            .setNegativeButton(getString(R.string.no), null)
+                            .show();
+                }
+
+                @Override
+                public void onCancel()
+                {
+
+
+                }
+
+            });
+
         }
     }
 

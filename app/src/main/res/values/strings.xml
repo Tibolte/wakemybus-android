@@ -18,5 +18,9 @@
     <string name="geofence_started">You\'ve just created a new geofence at the specified location. You\'ll be notified when entering it.</string>
     <string name="geofences_fragment">Geofences</string>
     <string name="map_fragment">Map</string>
+    <string name="alert_geofence_title">Create Geofence</string>
+    <string name="alert_geofence_description">Are you sure you want to create a geofence at this location?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 
 </resources>
