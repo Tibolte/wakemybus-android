@@ -37,6 +37,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
 import fr.wakemybus.playground.geofencing.places.PlaceProvider;
@@ -121,6 +122,11 @@ public class GeofencingActivity extends ActionBarActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            return true;
+        } else if(id == R.id.action_show_geofences) {
+            if (mServiceManager != null) {
+                mServiceManager.sendServiceMessage(LocationClientService.SHOW_GEOFENCES);
+            }
             return true;
         }
 
@@ -259,6 +265,16 @@ public class GeofencingActivity extends ActionBarActivity
                     }
                     break;
                 }
+                case LocationClientService.SHOW_GEOFENCES: {
+                    if(b != null) {
+                        b.setClassLoader(SimpleGeofence.class.getClassLoader());
+                        if (b.containsKey(LocationClientService.BUNDLE_GEOFENCES)) {
+                            ArrayList<SimpleGeofence> geofences = b.getParcelableArrayList(LocationClientService.BUNDLE_GEOFENCES);
+                            Log.d(TAG, String.format("received array size: %d", geofences.size()));
+                        }
+                    }
+                }
+                break;
             }
         }
     };
@@ -356,7 +372,7 @@ public class GeofencingActivity extends ActionBarActivity
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     SimpleGeofence geofence = new SimpleGeofence(
-                                            "1",
+                                            String.valueOf(finalPosition.latitude),
                                             finalPosition.latitude,
                                             finalPosition.longitude,
                                             100.0f,

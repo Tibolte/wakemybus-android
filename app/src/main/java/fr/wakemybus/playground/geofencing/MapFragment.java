@@ -92,7 +92,7 @@ public class MapFragment extends Fragment {
                                     LatLng markerLocation = marker.getPosition();
 
                                     final SimpleGeofence geofence = new SimpleGeofence(
-                                            "1",
+                                            String.valueOf(markerLocation.latitude),
                                             markerLocation.latitude,
                                             markerLocation.longitude,
                                             100.0f,

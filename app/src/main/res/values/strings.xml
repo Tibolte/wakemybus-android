@@ -22,5 +22,6 @@
     <string name="alert_geofence_description">Are you sure you want to create a geofence at this location?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="action_show_geofences">Show geofences</string>
 
 </resources>

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fr.wakemybus.MyApplication;
+import fr.wakemybus.playground.geofencing.GeofenceStore;
 import fr.wakemybus.playground.geofencing.GeofencingActivity;
 import fr.wakemybus.playground.geofencing.SimpleGeofence;
 import fr.wakemybus.playground.geofencing.SimpleGeofenceStore;
@@ -33,10 +34,11 @@ public class LocationClientService extends AbstractService implements
 
     private static final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
-    public static final int ADD_GEOFENCE = 11, GEOFENCE_CREATED = 12;
+    public static final int ADD_GEOFENCE = 11, GEOFENCE_CREATED = 12, SHOW_GEOFENCES = 13;
     public static final int KILL = 21;
 
     public static final String BUNDLE_GEOFENCE = MyApplication.getInstance().getPackageName() + ".bundle_geofence";
+    public static final String BUNDLE_GEOFENCES = MyApplication.getInstance().getPackageName() + ".bundle_geofences";
 
     // Internal List of Geofence objects. In a real app, these might be provided by an API based on
     // locations within the user's proximity.
@@ -93,6 +95,14 @@ public class LocationClientService extends AbstractService implements
                 createGeoFence(simpleGeofence);
                 break;
             }
+            case SHOW_GEOFENCES: {
+                ArrayList<SimpleGeofence> geofences = GeofenceStore.getInstance().getGeofences();
+                Bundle b = new Bundle();
+                b.putParcelableArrayList(BUNDLE_GEOFENCES, geofences);
+                sendClientMessage(SHOW_GEOFENCES, b);
+                Log.d(TAG, String.format("array size: %d", geofences.size()));
+                break;
+            }
             case KILL: {
                 stopSelf();
                 break;
@@ -144,8 +154,12 @@ public class LocationClientService extends AbstractService implements
 
     private void createGeoFence(SimpleGeofence geofence) {
 
-        mGeofenceStorage.setGeofence("1", geofence);
+        //TODO: latitude for key, something better?
+        mGeofenceStorage.setGeofence(geofence.getId(), geofence);
         mGeofenceList.add(geofence.toGeofence());
+
+        //try new way of storage
+        GeofenceStore.getInstance().addGeofence(geofence);
 
         mApiClient = new GoogleApiClient.Builder(LocationClientService.this)
                 .addApi(LocationServices.API)
