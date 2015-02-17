@@ -15,6 +15,7 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -86,69 +87,14 @@ public class MapFragment extends Fragment {
                 super.onActivityCreated(savedInstanceState);
                 mMap = mMapFragment.getMap();
                 if (mMap != null) {
+                    mMap.setMyLocationEnabled(true);
                     GPSTracker gps = new GPSTracker(getActivity());
-                    if(gps.canGetLocation()){
-                        if (mMap!=null){
+                    if(gps.canGetLocation()) {
+                        if (mMap != null) {
                             double curLat = gps.getLatitude();
                             double curLon = gps.getLongitude();
                             LatLng currentPos = new LatLng(curLat, curLon);
-                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(curLat, curLon), 12));
-
-                            final Marker marker= mMap.addMarker(new MarkerOptions().position(currentPos)
-                                    .title("Draggable Marker")
-                                    .snippet("Long press and move the marker if needed.")
-                                    .draggable(true));
-                            mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
-
-                                @Override
-                                public void onMarkerDrag(Marker arg0) {
-                                    Log.d(TAG, "Marker Dragging");
-                                }
-
-                                @Override
-                                public void onMarkerDragEnd(Marker arg0) {
-                                    LatLng markerLocation = marker.getPosition();
-
-                                    final SimpleGeofence geofence = new SimpleGeofence(
-                                            String.valueOf(markerLocation.latitude),
-                                            markerLocation.latitude,
-                                            markerLocation.longitude,
-                                            100.0f,
-                                            Geofence.NEVER_EXPIRE,
-                                            Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT
-                                    );
-
-
-                                    new AlertDialog.Builder(getActivity())
-                                            .setTitle(getString(R.string.alert_geofence_title))
-                                            .setMessage(getString(R.string.alert_geofence_description))
-                                            .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
-                                                @Override
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    if (mCallback != null) {
-                                                        mCallback.onMapCreateGeoFence(geofence);
-                                                    }
-                                                }
-
-                                            })
-                                            .setNegativeButton(getString(R.string.no), null)
-                                            .show();
-
-                                    Log.d(TAG, "Marker finished");
-                                }
-
-                                @Override
-                                public void onMarkerDragStart(Marker arg0) {
-                                    Log.d(TAG, "Marker Started");
-                                }
-                            });
-
-                            new SnackBar.Builder(getActivity())
-                                    .withMessage(getString(R.string.map_instructions))
-                                    .withActionMessage(getString(R.string.map_instructions_ok))
-                                    .withStyle(SnackBar.Style.CONFIRM)
-                                    .withDuration(SnackBar.LONG_SNACK)
-                                    .show();
+                            addDefaultMArker(currentPos, true);
                         }
                     }
                 }
@@ -183,10 +129,95 @@ public class MapFragment extends Fragment {
     }
 
     /**
+     * MARK: Public methods
+     */
+
+    public void addDefaultMArker(LatLng position, boolean animate) {
+        if (mMap!=null){
+            if(animate) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(position, 12));
+            }
+
+            final Marker marker= mMap.addMarker(new MarkerOptions().position(position)
+                    .title("Draggable Marker")
+                    .snippet("Long press, then move and drag to create a geofence.")
+                    .draggable(true));
+            mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+
+                @Override
+                public void onMarkerDrag(Marker arg0) {
+                    Log.d(TAG, "Marker Dragging");
+                }
+
+                @Override
+                public void onMarkerDragEnd(Marker arg0) {
+                    LatLng markerLocation = marker.getPosition();
+
+                    final SimpleGeofence geofence = new SimpleGeofence(
+                            String.valueOf(markerLocation.latitude),
+                            markerLocation.latitude,
+                            markerLocation.longitude,
+                            100.0f,
+                            Geofence.NEVER_EXPIRE,
+                            Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT
+                    );
+
+
+                    new AlertDialog.Builder(getActivity())
+                            .setTitle(getString(R.string.alert_geofence_title))
+                            .setMessage(getString(R.string.alert_geofence_description))
+                            .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (mCallback != null) {
+                                        mCallback.onMapCreateGeoFence(geofence);
+                                    }
+                                }
+
+                            })
+                            .setNegativeButton(getString(R.string.no), null)
+                            .show();
+
+                    Log.d(TAG, "Marker finished");
+                }
+
+                @Override
+                public void onMarkerDragStart(Marker arg0) {
+                    Log.d(TAG, "Marker Started");
+                }
+            });
+
+            new SnackBar.Builder(getActivity())
+                    .withMessage(getString(R.string.map_instructions))
+                    .withActionMessage(getString(R.string.map_instructions_ok))
+                    .withStyle(SnackBar.Style.CONFIRM)
+                    .withDuration(SnackBar.LONG_SNACK)
+                    .show();
+        }
+    }
+
+    /**
      * MARK: Bus event
      */
     @Subscribe
     public void onGeofences(GeofencesReceivedEvent event) {
         ArrayList<SimpleGeofence> geofences = event.getGeofences();
+
+        if(geofences.size() > 0) {
+            mMap.clear();
+            GPSTracker gps = new GPSTracker(getActivity());
+            if(gps.canGetLocation()) {
+                if (mMap != null) {
+                    double curLat = gps.getLatitude();
+                    double curLon = gps.getLongitude();
+                    LatLng currentPos = new LatLng(curLat, curLon);
+                    addDefaultMArker(currentPos, true);
+                }
+            }
+
+            for(SimpleGeofence geofence: geofences){
+                mMap.addCircle(new CircleOptions().center(new LatLng(geofence.getLatitude(), geofence.getLongitude())).radius(geofence.getRadius()));
+            }
+        }
     }
 }

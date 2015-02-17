@@ -273,6 +273,14 @@ public class GeofencingActivity extends ActionBarActivity
                             ArrayList<SimpleGeofence> geofences = b.getParcelableArrayList(LocationClientService.BUNDLE_GEOFENCES);
                             Log.d(TAG, String.format("received array size: %d", geofences.size()));
                             BusProvider.getUIBusInstance().post(new GeofencesReceivedEvent(geofences));
+                            if(geofences.isEmpty()) {
+                                new SnackBar.Builder(GeofencingActivity.this)
+                                        .withMessage(getString(R.string.no_geofences))
+                                        .withActionMessage(getString(R.string.map_instructions_ok))
+                                        .withStyle(SnackBar.Style.ALERT)
+                                        .withDuration(SnackBar.LONG_SNACK)
+                                        .show();
+                            }
                         }
                     }
                 }
@@ -344,19 +352,16 @@ public class GeofencingActivity extends ActionBarActivity
      */
 
     private void showLocations(Cursor c){
-        MarkerOptions markerOptions = null;
         LatLng position = null;
 
+        //TODO: event bus for this
         fr.wakemybus.playground.geofencing.MapFragment mapFragment = (fr.wakemybus.playground.geofencing.MapFragment) mSectionsPagerAdapter.getRegisteredFragment(0);
         GoogleMap map = mapFragment.getMap();
 
         map.clear();
         while(c.moveToNext()){
-            markerOptions = new MarkerOptions();
             position = new LatLng(Double.parseDouble(c.getString(1)),Double.parseDouble(c.getString(2)));
-            markerOptions.position(position);
-            markerOptions.title(c.getString(0));
-            map.addMarker(markerOptions);
+            mapFragment.addDefaultMArker(position, false);
         }
         if(position!=null){
             CameraUpdate cameraPosition = CameraUpdateFactory.newLatLng(position);
