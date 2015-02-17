@@ -18,8 +18,13 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.squareup.otto.Subscribe;
 
+import java.util.ArrayList;
+
+import fr.wakemybus.playground.util.BusProvider;
 import fr.wakemybus.playground.util.GPSTracker;
+import fr.wakemybus.playground.util.GeofencesReceivedEvent;
 import fr.wakemybus.wakemybus.R;
 
 public class MapFragment extends Fragment {
@@ -55,6 +60,19 @@ public class MapFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        BusProvider.getUIBusInstance().register(this);
+
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        BusProvider.getUIBusInstance().unregister(this);
     }
 
     @Override
@@ -164,4 +182,11 @@ public class MapFragment extends Fragment {
         return mMap;
     }
 
+    /**
+     * MARK: Bus event
+     */
+    @Subscribe
+    public void onGeofences(GeofencesReceivedEvent event) {
+        ArrayList<SimpleGeofence> geofences = event.getGeofences();
+    }
 }

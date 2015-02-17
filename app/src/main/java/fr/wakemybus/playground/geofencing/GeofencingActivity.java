@@ -43,7 +43,9 @@ import java.util.Locale;
 import fr.wakemybus.playground.geofencing.places.PlaceProvider;
 import fr.wakemybus.playground.geofencing.services.LocationClientService;
 import fr.wakemybus.playground.geofencing.services.ServiceManager;
+import fr.wakemybus.playground.util.BusProvider;
 import fr.wakemybus.playground.util.GPSTracker;
+import fr.wakemybus.playground.util.GeofencesReceivedEvent;
 import fr.wakemybus.wakemybus.R;
 
 public class GeofencingActivity extends ActionBarActivity
@@ -271,6 +273,7 @@ public class GeofencingActivity extends ActionBarActivity
                         if (b.containsKey(LocationClientService.BUNDLE_GEOFENCES)) {
                             ArrayList<SimpleGeofence> geofences = b.getParcelableArrayList(LocationClientService.BUNDLE_GEOFENCES);
                             Log.d(TAG, String.format("received array size: %d", geofences.size()));
+                            BusProvider.getUIBusInstance().post(new GeofencesReceivedEvent(geofences));
                         }
                     }
                 }

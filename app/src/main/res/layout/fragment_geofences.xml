@@ -3,7 +3,9 @@
     android:layout_height="match_parent"
     tools:context="fr.wakemybus.playground.geofencing.GeofencesFragment">
 
-    <TextView android:layout_width="match_parent" android:layout_height="match_parent"
-        android:text="@string/geofences_fragment" />
+    <ListView
+        android:id="@android:id/list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
 </FrameLayout>
