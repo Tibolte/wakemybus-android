@@ -2,6 +2,8 @@ package fr.wakemybus.playground.geofencing;
 
 
 import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
@@ -11,14 +13,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.google.android.gms.location.Geofence;
 import com.squareup.otto.Subscribe;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 import fr.wakemybus.playground.util.BusProvider;
 import fr.wakemybus.playground.util.GeofencesReceivedEvent;
@@ -39,7 +47,7 @@ public class GeofencesFragment extends Fragment {
      * MARK: Instance
      */
 
-    public static GeofencesFragment newInstance(String param1, String param2) {
+    public static GeofencesFragment newInstance() {
         GeofencesFragment fragment = new GeofencesFragment();
         return fragment;
     }
@@ -134,6 +142,8 @@ public class GeofencesFragment extends Fragment {
 
                 holder.txtAddress = (TextView) convertView.findViewById(R.id.txtAddress);
                 holder.txtLatLon = (TextView) convertView.findViewById(R.id.txtLatLong);
+                holder.txtExpiration = (TextView) convertView.findViewById(R.id.txtExpiration);
+                holder.txtRadius = (TextView) convertView.findViewById(R.id.txtRadius);
                 holder.toggleButton = (ToggleButton) convertView.findViewById(R.id.toggle);
 
                 convertView.setTag(holder);
@@ -142,6 +152,37 @@ public class GeofencesFragment extends Fragment {
             }
 
             holder.txtLatLon.setText(String.format("lat: %f, long: %f", simpleGeofence.getLatitude(), simpleGeofence.getLongitude()));
+            holder.txtRadius.setText(String.format("radius: %sm", String.valueOf(simpleGeofence.getRadius())));
+
+            String expiration = "Expiration mode: %s";
+            if(simpleGeofence.getExpirationDuration() == Geofence.NEVER_EXPIRE) {
+                holder.txtExpiration.setText(String.format(expiration, "NEVER_EXPIRE"));
+            } else if(simpleGeofence.getExpirationDuration() == Geofence.GEOFENCE_TRANSITION_DWELL) {
+                holder.txtExpiration.setText(String.format(expiration, "GEOFENCE_TRANSITION_DWELL"));
+            } else if(simpleGeofence.getExpirationDuration() == Geofence.GEOFENCE_TRANSITION_ENTER) {
+                holder.txtExpiration.setText(String.format(expiration, "GEOFENCE_TRANSITION_ENTER"));
+            } else if(simpleGeofence.getExpirationDuration() == Geofence.GEOFENCE_TRANSITION_EXIT) {
+                holder.txtExpiration.setText(String.format(expiration, "GEOFENCE_TRANSITION_EXIT"));
+            }
+
+            Geocoder geocoder = new Geocoder(getActivity().getApplicationContext(), Locale.getDefault());
+            try {
+                List<Address> addresses = geocoder.getFromLocation(simpleGeofence.getLatitude(), simpleGeofence.getLongitude(), 1);
+
+                if(addresses.size() > 0) {
+                    holder.txtAddress.setText(String.format("Address: %s", addresses.get(0).getAddressLine(0)));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            holder.toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    Toast.makeText(getActivity().getApplicationContext(), "Not implemented yet.",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
 
             return convertView;
         }
@@ -149,6 +190,8 @@ public class GeofencesFragment extends Fragment {
         private class ViewHolder {
             TextView txtAddress;
             TextView txtLatLon;
+            TextView txtExpiration;
+            TextView txtRadius;
             ToggleButton toggleButton;
         }
     }

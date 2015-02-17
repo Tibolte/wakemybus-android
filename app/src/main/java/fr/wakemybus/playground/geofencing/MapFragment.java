@@ -114,7 +114,7 @@ public class MapFragment extends Fragment {
                                             markerLocation.latitude,
                                             markerLocation.longitude,
                                             100.0f,
-                                            -1,
+                                            Geofence.NEVER_EXPIRE,
                                             Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT
                                     );
 

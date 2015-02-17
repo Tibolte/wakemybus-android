@@ -187,7 +187,6 @@ public class GeofencingActivity extends ActionBarActivity
     /**
      * MARK: Tabbar adapter
      */
-    //TODO: find the best practice to enable the activity to communicate with current fragment
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         SparseArray<Fragment> registeredFragments = new SparseArray<Fragment>();
@@ -207,7 +206,7 @@ public class GeofencingActivity extends ActionBarActivity
                 case 0:
                     return fr.wakemybus.playground.geofencing.MapFragment.newInstance();
                 case 1:
-                    return GeofencesFragment.newInstance("", "");
+                    return GeofencesFragment.newInstance();
             }
             return null;
         }
@@ -379,7 +378,7 @@ public class GeofencingActivity extends ActionBarActivity
                                             finalPosition.latitude,
                                             finalPosition.longitude,
                                             100.0f,
-                                            -1,
+                                            Geofence.NEVER_EXPIRE,
                                             Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT
                                     );
                                     Bundle b = new Bundle();
