@@ -39,7 +39,7 @@ import fr.wakemybus.wakemybus.R;
  */
 public class GeofencesFragment extends Fragment {
 
-    private static final String TAG = GeofencesFragment.class.getSimpleName();
+    private static final String LOG_TAG = GeofencesFragment.class.getSimpleName();
 
     private ListView mListView;
 
@@ -94,11 +94,12 @@ public class GeofencesFragment extends Fragment {
     /**
      * MARK: Bus event
      */
+
     @Subscribe
     public void onGeofences(GeofencesReceivedEvent event) {
         ArrayList<SimpleGeofence> geofences = event.getGeofences();
 
-        Log.d(TAG, String.format("received array size: %d", geofences.size()));
+        Log.d(LOG_TAG, String.format("received array size: %d", geofences.size()));
 
         GeofencesAdapter adapter = new GeofencesAdapter(geofences);
         mListView.setAdapter(adapter);
@@ -107,6 +108,7 @@ public class GeofencesFragment extends Fragment {
     /**
      * MARK: List adapter
      */
+
     public class GeofencesAdapter extends BaseAdapter {
 
         private ArrayList<SimpleGeofence> geofences;
@@ -133,7 +135,9 @@ public class GeofencesFragment extends Fragment {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
 
-            SimpleGeofence simpleGeofence = getItem(position);
+            //TODO: update toggleButton if the geofence is activated or not
+
+            final SimpleGeofence simpleGeofence = getItem(position);
             ViewHolder holder;
             if(convertView == null) {
                 LayoutInflater inflater = (LayoutInflater) getActivity().getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -179,8 +183,11 @@ public class GeofencesFragment extends Fragment {
             holder.toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    Toast.makeText(getActivity().getApplicationContext(), "Not implemented yet.",
-                            Toast.LENGTH_LONG).show();
+                    if(isChecked) {
+                        GeofencingActivity.getInstance().activateGeoFence(simpleGeofence);
+                    } else {
+                        GeofencingActivity.getInstance().deactivateGeoFence(simpleGeofence);
+                    }
                 }
             });
 

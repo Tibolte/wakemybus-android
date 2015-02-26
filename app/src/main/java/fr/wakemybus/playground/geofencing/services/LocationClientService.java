@@ -34,7 +34,7 @@ public class LocationClientService extends AbstractService implements
 
     private static final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
-    public static final int ADD_GEOFENCE = 11, GEOFENCE_CREATED = 12, SHOW_GEOFENCES = 13;
+    public static final int ADD_GEOFENCE = 11, GEOFENCE_CREATED = 12, SHOW_GEOFENCES = 13, ACTIVATE_GEOFENCE = 14, DEACTIVATE_GEOFENCE = 15;
     public static final int KILL = 21;
 
     public static final String BUNDLE_GEOFENCE = MyApplication.getInstance().getPackageName() + ".bundle_geofence";
@@ -101,6 +101,20 @@ public class LocationClientService extends AbstractService implements
                 b.putParcelableArrayList(BUNDLE_GEOFENCES, geofences);
                 sendClientMessage(SHOW_GEOFENCES, b);
                 Log.d(TAG, String.format("array size: %d", geofences.size()));
+                break;
+            }
+            case ACTIVATE_GEOFENCE: {
+                Bundle b = msg.getData();
+                b.setClassLoader(SimpleGeofence.class.getClassLoader());
+                SimpleGeofence simpleGeofence = (SimpleGeofence)b.getParcelable(BUNDLE_GEOFENCE);
+                //TODO: activate
+                break;
+            }
+            case DEACTIVATE_GEOFENCE: {
+                Bundle b = msg.getData();
+                b.setClassLoader(SimpleGeofence.class.getClassLoader());
+                SimpleGeofence simpleGeofence = (SimpleGeofence)b.getParcelable(BUNDLE_GEOFENCE);
+                //TODO: deactivate
                 break;
             }
             case KILL: {

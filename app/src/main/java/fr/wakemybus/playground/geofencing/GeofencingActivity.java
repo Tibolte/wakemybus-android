@@ -187,6 +187,7 @@ public class GeofencingActivity extends ActionBarActivity
     /**
      * MARK: Tabbar adapter
      */
+
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         SparseArray<Fragment> registeredFragments = new SparseArray<Fragment>();
@@ -345,6 +346,22 @@ public class GeofencingActivity extends ActionBarActivity
 
     public static GeofencingActivity getInstance() {
         return mInstance;
+    }
+
+    public void activateGeoFence(SimpleGeofence geofence) {
+        Bundle b = new Bundle();
+        b.putParcelable(LocationClientService.BUNDLE_GEOFENCE, geofence);
+        if (mServiceManager != null) {
+            mServiceManager.sendServiceMessage(LocationClientService.ACTIVATE_GEOFENCE, b);
+        }
+    }
+
+    public void deactivateGeoFence(SimpleGeofence geofence) {
+        Bundle b = new Bundle();
+        b.putParcelable(LocationClientService.BUNDLE_GEOFENCE, geofence);
+        if (mServiceManager != null) {
+            mServiceManager.sendServiceMessage(LocationClientService.DEACTIVATE_GEOFENCE, b);
+        }
     }
 
     /**
